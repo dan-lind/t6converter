@@ -9,7 +9,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -37,13 +36,13 @@ func main() {
 }
 
 func processFiles(files []os.FileInfo, inputDir string, outputDir string, daily bool) {
-	var wg sync.WaitGroup
+	//var wg sync.WaitGroup
 	for _, f := range files {
 
 		if !f.IsDir() {
 			//errorCh := make(chan error)
-			wg.Add(1)
-			go parseFile(f, inputDir, outputDir, daily, &wg)
+			//wg.Add(1)
+			parseFile(f, inputDir, outputDir, daily)
 			/*
 			err := <-errorCh
 			if err != nil {
@@ -53,11 +52,11 @@ func processFiles(files []os.FileInfo, inputDir string, outputDir string, daily 
 
 		}
 	}
-	wg.Wait()
+	//wg.Wait()
 }
 
-func parseFile(file os.FileInfo, inputDir string, outputDir string, daily bool, wg *sync.WaitGroup) {
-	defer wg.Done()
+func parseFile(file os.FileInfo, inputDir string, outputDir string, daily bool) {
+	//defer wg.Done()
 	csvRecords, _ := c.FileToCsv(inputDir + file.Name())
 	/*
 	if err != nil {
@@ -79,7 +78,7 @@ func parseFile(file os.FileInfo, inputDir string, outputDir string, daily bool, 
 		errorCh <- pErr
 	}
 */
-	c.StructToT6File(records, outputDir, strings.Split(file.Name(),".")[0], daily)
+	c.StructToT6File(records, outputDir, strings.Split(file.Name(), ".")[0], daily)
 
 	//errorCh <- nil
 }
