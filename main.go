@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -36,49 +37,48 @@ func main() {
 }
 
 func processFiles(files []os.FileInfo, inputDir string, outputDir string, daily bool) {
-	//var wg sync.WaitGroup
+	var wg sync.WaitGroup
 	for _, f := range files {
 
 		if !f.IsDir() {
-			//errorCh := make(chan error)
-			//wg.Add(1)
-			parseFile(f, inputDir, outputDir, daily)
-			/*
+			errorCh := make(chan error, 4)
+			wg.Add(1)
+			go parseFile(f, inputDir, outputDir, daily, &wg, errorCh)
+
 			err := <-errorCh
 			if err != nil {
 				log.Printf("Skipping %v: %+v", f.Name(), err)
 			}
-			*/
+
 
 		}
 	}
-	//wg.Wait()
+	wg.Wait()
 }
 
-func parseFile(file os.FileInfo, inputDir string, outputDir string, daily bool) {
-	//defer wg.Done()
-	csvRecords, _ := c.FileToCsv(inputDir + file.Name())
-	/*
+func parseFile(file os.FileInfo, inputDir string, outputDir string, daily bool, wg *sync.WaitGroup,  errorCh chan error) {
+	defer wg.Done()
+	csvRecords, err := c.FileToCsv(inputDir + file.Name())
+
 	if err != nil {
 		errorCh <- err
 	}
-	*/
 
 	var records map[int][]model.ZorroT6
-	//var pErr error
+	var pErr error
 
 	if daily {
-		records, _ = c.RwDailyToStruct(csvRecords)
+		records, pErr = c.RwDailyToStruct(csvRecords)
 	} else {
-		records, _ = c.Rw1minToStruct(csvRecords)
+		records, pErr = c.Rw1minToStruct(csvRecords)
 	}
 
-	/*
+
 	if pErr != nil {
 		errorCh <- pErr
 	}
-*/
+
 	c.StructToT6File(records, outputDir, strings.Split(file.Name(), ".")[0], daily)
 
-	//errorCh <- nil
+	errorCh <- nil
 }

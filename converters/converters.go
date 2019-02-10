@@ -68,21 +68,26 @@ func RwDailyToStruct(records [][]string) (map[int][]model.ZorroT6, error) {
 		}
 
 		t6.Date = ConvertToOle(parsedTime)
-		if open, err := strconv.ParseFloat(record[1], 32); err == nil {
+		if open, err := strconv.ParseFloat(strings.TrimSpace(record[1]), 32); err == nil {
 			t6.Open = float32(open)
 		}
-		if high, err := strconv.ParseFloat(record[2], 32); err == nil {
+		if high, err := strconv.ParseFloat(strings.TrimSpace(record[2]), 32); err == nil {
 			t6.High = float32(high)
 		}
-		if low, err := strconv.ParseFloat(record[3], 32); err == nil {
+		if low, err := strconv.ParseFloat(strings.TrimSpace(record[3]), 32); err == nil {
 			t6.Low = float32(low)
 		}
-		if close, err := strconv.ParseFloat(record[4], 32); err == nil {
+		if close, err := strconv.ParseFloat(strings.TrimSpace(record[4]), 32); err == nil {
 			t6.Close = float32(close)
 		}
-		if vol, err := strconv.ParseFloat(record[5], 32); err == nil {
-			t6.Vol = float32(vol)
+		if len(record) == 6 {
+			if vol, err := strconv.ParseFloat(record[5], 32); err == nil {
+				t6.Vol = float32(vol)
+			}
+		} else {
+			t6.Vol = 0
 		}
+
 		t6.Val = float32(parsedTime.Year())
 		t6records = append(t6records, t6)
 	}
