@@ -135,12 +135,12 @@ func StructToT6File(recordMap map[int][]model.ZorroT6, outputPath string, fileNa
 }
 
 func writeAllRecords(records []model.ZorroT6, buf *bytes.Buffer) {
-	for _, record := range records {
-		err := binary.Write(buf, binary.LittleEndian, record)
+	//for _, record := range records {
+		err := binary.Write(buf, binary.LittleEndian, records)
 		if err != nil {
 			log.Println("binary.Write failed:", err)
 		}
-	}
+	//}
 }
 
 func ConvertToOle(oledate time.Time) float64 {

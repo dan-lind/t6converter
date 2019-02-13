@@ -72,7 +72,7 @@ func parseFile(file os.FileInfo, inputDir string, outputDir string, daily bool, 
 	} else {
 		records, pErr = c.Rw1minToStruct(csvRecords)
 	}
-
+	
 
 	if pErr != nil {
 		errorCh <- pErr
