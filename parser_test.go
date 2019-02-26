@@ -16,12 +16,12 @@ import (
 )
 
 func BenchmarkParseCsvToT6(t *testing.B) {
-	files, _ := ioutil.ReadDir("test/")
 
 	for i := 0; i < t.N; i++ {
-		processFiles(files, "test/", "test/", false)
+		processFiles( "test/", "test/", false)
 	}
 
+	t.StopTimer()
 	newFiles, _ := ioutil.ReadDir("test/")
 	for _, newFile := range newFiles {
 
@@ -35,15 +35,47 @@ func BenchmarkParseCsvToT6(t *testing.B) {
 func BenchmarkParse1minToStruct(t *testing.B) {
 	records, _ := c.FileToCsv("test/perf.csv")
 
+	t.ResetTimer()
 	for i := 0; i < t.N; i++ {
 		c.Rw1minToStruct(records)
 	}
 }
 
-func TestProcessFiles(t *testing.T) {
-	files, _ := ioutil.ReadDir("test/")
+func BenchmarkFileToCsv(t *testing.B) {
 
-	processFiles(files, "test/", "test/", false)
+	for i := 0; i < t.N; i++ {
+		c.FileToCsv("test/perf.csv")
+	}
+}
+
+
+func BenchmarkBinaryWrite(t *testing.B) {
+	tmpfile := writeTempFile([]byte(data1min))
+	defer os.Remove(tmpfile.Name()) // clean up
+	records, _ := c.FileToCsv(tmpfile.Name())
+	t6records, _ := c.Rw1minToStruct(records)
+
+	t.ResetTimer()
+	for i := 0; i < t.N; i++ {
+		c.StructToT6File(t6records, "test/", "1min", false)
+	}
+
+	t.StopTimer()
+	os.Remove("test/1min_2014.t6")
+	os.Remove("test/1min_2015.t6")
+}
+
+func BenchmarkConvertRecord(t *testing.B) {
+	test := []string{"20140102","09:30","38.88","38.88","38.82","38.85","67004"}
+
+	t.ResetTimer()
+	for i := 0; i < t.N; i++ {
+		c.RecordToStruct(test)
+	}
+}
+
+func TestProcessFiles(t *testing.T) {
+	processFiles("test/", "test/", false)
 
 	newFiles, _ := ioutil.ReadDir("test/")
 	for _, newFile := range newFiles {
@@ -94,7 +126,7 @@ func TestParse1minToStruct(t *testing.T) {
 	assert.Equal(t, float32(38.88), t6records[2014][0].High)
 	assert.Equal(t, float32(38.82), t6records[2014][0].Low)
 	assert.Equal(t, float32(38.85), t6records[2014][0].Close)
-	assert.Equal(t, float32(67004), t6records[2014][0].Vol)
+	assert.Equal(t, int32(67004), t6records[2014][0].Vol)
 
 	parsedTime2, _ := time.Parse("200601021504", "201501020949")
 	assert.Equal(t, c.ConvertToOle(parsedTime2), t6records[2015][1].Date)
@@ -102,7 +134,7 @@ func TestParse1minToStruct(t *testing.T) {
 	assert.Equal(t, float32(38.61), t6records[2015][1].High)
 	assert.Equal(t, float32(38.59), t6records[2015][1].Low)
 	assert.Equal(t, float32(38.61), t6records[2015][1].Close)
-	assert.Equal(t, float32(1762), t6records[2015][1].Vol)
+	assert.Equal(t, int32(1762), t6records[2015][1].Vol)
 
 }
 
@@ -121,7 +153,7 @@ func TestParseDailyToStruct(t *testing.T) {
 	assert.Equal(t, float32(421.36), t6records[0][0].High)
 	assert.Equal(t, float32(418.97), t6records[0][0].Low)
 	assert.Equal(t, float32(419.64), t6records[0][0].Close)
-	assert.Equal(t, float32(0), t6records[0][0].Vol)
+	assert.Equal(t, int32(0), t6records[0][0].Vol)
 
 	parsedTime2, _ := time.Parse("20060102", "20010607")
 	assert.Equal(t, c.ConvertToOle(parsedTime2), t6records[0][18].Date)
@@ -129,7 +161,7 @@ func TestParseDailyToStruct(t *testing.T) {
 	assert.Equal(t, float32(426.85), t6records[0][18].High)
 	assert.Equal(t, float32(423.50), t6records[0][18].Low)
 	assert.Equal(t, float32(426.15), t6records[0][18].Close)
-	assert.Equal(t, float32(0), t6records[0][18].Vol)
+	assert.Equal(t, int32(0), t6records[0][18].Vol)
 }
 
 func TestParseDailyFxToStruct(t *testing.T) {
@@ -147,7 +179,7 @@ func TestParseDailyFxToStruct(t *testing.T) {
 	assert.Equal(t, float32(2.94750000), t6records[0][0].High)
 	assert.Equal(t, float32(2.89110000), t6records[0][0].Low)
 	assert.Equal(t, float32(2.89330000), t6records[0][0].Close)
-	assert.Equal(t, float32(0), t6records[0][0].Vol)
+	assert.Equal(t, int32(0), t6records[0][0].Vol)
 
 	parsedTime2, _ := time.Parse("20060102", "20040514")
 	assert.Equal(t, c.ConvertToOle(parsedTime2), t6records[0][18].Date)
@@ -155,7 +187,7 @@ func TestParseDailyFxToStruct(t *testing.T) {
 	assert.Equal(t, float32(2.93730000), t6records[0][18].High)
 	assert.Equal(t, float32(2.90880000), t6records[0][18].Low)
 	assert.Equal(t, float32(2.93190000), t6records[0][18].Close)
-	assert.Equal(t, float32(0), t6records[0][18].Vol)
+	assert.Equal(t, int32(0), t6records[0][18].Vol)
 }
 
 func TestCreateT6File(t *testing.T) {
@@ -177,7 +209,7 @@ func TestCreateT6File(t *testing.T) {
 	assert.Equal(t, float32(38.68), t6FromFile[0].High)
 	assert.Equal(t, float32(38.61), t6FromFile[0].Low)
 	assert.Equal(t, float32(38.61), t6FromFile[0].Close)
-	assert.Equal(t, float32(7784), t6FromFile[0].Vol)
+	assert.Equal(t, int32(7784), t6FromFile[0].Vol)
 
 	t6FromFile2 := readt6("test/1min_2015.t6")
 
@@ -188,7 +220,7 @@ func TestCreateT6File(t *testing.T) {
 	assert.Equal(t, float32(38.61), t6FromFile2[0].High)
 	assert.Equal(t, float32(38.59), t6FromFile2[0].Low)
 	assert.Equal(t, float32(38.61), t6FromFile2[0].Close)
-	assert.Equal(t, float32(1762), t6FromFile2[0].Vol)
+	assert.Equal(t, int32(1762), t6FromFile2[0].Vol)
 
 	os.Remove("test/1min_2014.t6")
 	os.Remove("test/1min_2015.t6")
