@@ -7,5 +7,5 @@ type ZorroT6 struct {
 	Open  float32
 	Close float32
 	Val   float32
-	Vol   float32
+	Vol   int32
 }
